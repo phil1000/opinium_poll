@@ -8,8 +8,9 @@ if (!requireNamespace("librarian")) install.packages("librarian", quiet = TRUE)
 # use suppress to prevent build warnings
 suppressWarnings(
   librarian::stock(yaml, tidyverse, tools, fs, curl, httr,
-                   polite, rvest, tidyxl, unpivotr, writexl, ggplot2, ggpubr,
-                   lubridate, ggrepel, scales, sf, svglite, quiet = TRUE)
+                   polite, rvest, tidyxl, unpivotr, ggplot2, ggpubr,
+                   lubridate, ggrepel, scales, sf, svglite, openxlsx, xlsx,
+                   quiet = TRUE)
 )
 
 source("./R/run_analysis.R", local=TRUE)
