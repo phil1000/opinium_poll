@@ -7,6 +7,8 @@ library(ggpubr)
 library(tidyr)
 library(magrittr)
 library(openxlsx)
+library(pdftools)
+library(glue)
 
 # source other scripts
 helper_functions <- new.env(); source("./R/helper_functions.R", 
@@ -19,6 +21,7 @@ run_analysis <- function() {
   
   run_opinium(config)
   run_survation(config)
+  #run_yougov(config)
 
 }
 
@@ -476,7 +479,19 @@ get_demog_headers <- function(df_sheet,
   
   # finding the first completely empty row, identify the end of the table
   # and removing everything below including notes
+
   table_end_row <- df %>%
+    group_by(row) %>%
+    summarize(sum_isblank = sum(is_blank),
+              length_isblank = length(is_blank)) %>%
+    filter(sum_isblank == 0 & length_isblank == 1) %>%
+    ungroup() %>%
+    filter(row == min(row)) %>%
+    pull(row) %>%
+    unique()
+  
+  if (identical(table_end_row, integer(0))) # this means I have a null value
+    table_end_row <- df %>%
     
     # skip the first column
     filter(
@@ -520,4 +535,45 @@ get_demog_headers <- function(df_sheet,
   df <- behead(df, "N", demog_level_2)
   
   return(df)
+}
+
+run_yougov <- function(config) {
+  
+  #browser()
+  
+  local_file = file.path("input", "yougov_local.pdf")
+  download.file(config$yougov_url, local_file, mode = "wb")
+  
+  txt <- pdf_text(local_file)
+  
+  # I only want to scrape data from the first and second pages - 
+  # txt[1] is page 1, txt[2] is page 2
+  
+  table_1 <- get_table(txt[1])
+}
+
+# taken from https://bookdown.org/Maxine/r4ds/pdf.html
+get_table <- function(text) {
+  # split the text into a one raw text matrix
+  text_matrix <- text %>% str_split("\\n", simplify = TRUE)
+  
+  # locate the start and end of the table
+  table_start <- text_matrix %>% 
+    str_which("Con")
+  table_end <- text_matrix %>% 
+    str_which("Other")
+  
+  # extract table text, replace space with "|"
+  table_raw <- text_matrix[1, (table_start):(table_end)] %>%
+    str_replace_all("\\s{2,}", "|")
+  
+  # creat text connection so that the text can be read back with read.csv()
+  table <- table_raw %>% 
+    textConnection() %>% 
+    read.csv(sep = "|", 
+             col.names = c("condition", "males", "females", "total")) %>%
+    as_tibble() %>% 
+    mutate(country = country_name)
+  
+  table
 }

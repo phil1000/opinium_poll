@@ -10,6 +10,7 @@ suppressWarnings(
   librarian::stock(yaml, tidyverse, tools, fs, curl, httr,
                    polite, rvest, tidyxl, unpivotr, ggplot2, ggpubr,
                    lubridate, ggrepel, scales, sf, svglite, openxlsx, xlsx,
+                   pdftools, glue,
                    quiet = TRUE)
 )
 
